@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lists vs Linked Lists: The Interactive Story</title>
+    <style>
+        :root {
+            /* Theme Colors */
+            --bg-dark: #121212;
+            --bg-card: #1e1e1e;
+            --text-main: #e0e0e0;
+            --text-muted: #a0a0a0;
+            
+            /* Python List Theme (Green/Blue) */
+            --list-primary: #2ecc71;
+            --list-secondary: #2980b9;
+            --list-glow: rgba(46, 204, 113, 0.3);
+
+            /* Linked List Theme (Purple/Orange) */
+            --ll-primary: #9b59b6;
+            --ll-secondary: #e67e22;
+            --ll-glow: rgba(155, 89, 182, 0.3);
+
+            /* UI Colors */
+            --accent: #f1c40f;
+            --success: #27ae60;
+            --error: #c0392b;
+            --border: #333;
+            
+            /* AI Sparkle Gradient */
+            --ai-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        * {
+            box-sizing: border-box;
+            transition: all 0.2s ease-in-out;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- UI Layout --- */
+        #top-bar {
+            height: 60px;
+            background: var(--bg-card);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            border-bottom: 1px solid var(--border);
+            z-index: 100;
+        }
+
+        #progress-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: #000;
+        }
+
+        #progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--list-primary), var(--ll-primary));
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        #main-container {
+            display: flex;
+            flex: 1;
+            height: calc(100vh - 60px);
+        }
+
+        /* --- Sidebar --- */
+        #sidebar {
+            width: 250px;
+            background: #181818;
+            border-right: 1px solid var(--border);
+            padding: 20px;
+            overflow-y: auto;
+            transform: translateX(0);
+            transition: transform 0.3s ease;
+        }
+
+        #sidebar.collapsed {
+            transform: translateX(-100%);
+            width: 0;
+            padding: 0;
+            border: none;
+        }
+
+        .toc-item {
+            padding: 10px;
+            margin-bottom: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .toc-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
+        .toc-item.active { background: rgba(255,255,255,0.1); color: var(--accent); font-weight: bold; border-left: 3px solid var(--accent); }
+
+        /* --- Slide Area --- */
+        #content-area {
+            flex: 1;
+            position: relative;
+            padding: 40px;
+            overflow-y: auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle at center, #1a1a1a 0%, #121212 100%);
+        }
+
+        .slide {
+            display: none;
+            width: 100%;
+            max-width: 900px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .slide.active { display: flex; flex-direction: column; align-items: center; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- Typography & Components --- */
+        h1 { font-size: 2.5rem; margin-bottom: 10px; text-align: center; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        h2 { font-size: 1.5rem; color: var(--text-muted); font-weight: 300; margin-bottom: 30px; text-align: center; }
+        p { line-height: 1.6; font-size: 1.1rem; max-width: 700px; text-align: center; }
+
+        .btn {
+            background: var(--bg-card);
+            color: white;
+            border: 1px solid var(--border);
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin: 5px;
+        }
+        .btn:hover { background: #333; border-color: #666; transform: translateY(-2px); }
+        .btn-primary { background: var(--list-secondary); border: none; }
+        .btn-accent { background: var(--ll-secondary); border: none; }
+        
+        /* New Sparkle Button Style */
+        .btn-sparkle {
+            background: var(--ai-gradient);
+            border: none;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(118, 75, 162, 0.4);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-sparkle:hover {
+            box-shadow: 0 6px 20px rgba(118, 75, 162, 0.6);
+            transform: translateY(-2px);
+        }
+
+        .card {
+            background: var(--bg-card);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin: 15px 0;
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .hidden { display: none; }
+        .revealed { animation: slideIn 0.5s forwards; }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* --- Interactive Visuals --- */
+        .memory-container { display: flex; gap: 10px; justify-content: center; margin: 30px 0; perspective: 1000px; }
+        
+        .mem-block {
+            width: 80px;
+            height: 80px;
+            background: #252525;
+            border: 2px solid var(--list-primary);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            cursor: pointer;
+        }
+        .mem-block:hover { transform: scale(1.1); z-index: 10; background: #333; }
+        .mem-block .idx { position: absolute; top: -25px; color: var(--list-primary); font-weight: bold; }
+        .mem-block .addr { font-size: 0.8rem; color: #777; margin-top: 5px; }
+
+        .ll-node {
+            width: 70px;
+            height: 70px;
+            background: #2d1b36;
+            border: 2px solid var(--ll-primary);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            margin: 0 15px;
+            box-shadow: 0 0 15px var(--ll-glow);
+        }
+        .ll-arrow { font-size: 24px; color: var(--ll-secondary); position: absolute; right: -25px; }
+
+        /* --- Slide Specific Styles --- */
+        
+        .path-choice { display: flex; gap: 40px; margin-top: 20px; }
+        .path-box {
+            width: 200px; height: 150px; border: 2px dashed #444; border-radius: 10px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer;
+        }
+        .path-box:hover { border-style: solid; background: #222; }
+        .path-box.list:hover { border-color: var(--list-primary); box-shadow: 0 0 20px var(--list-glow); }
+        .path-box.ll:hover { border-color: var(--ll-primary); box-shadow: 0 0 20px var(--ll-glow); }
+
+        .input-group { margin: 10px; display: inline-block; text-align: left; }
+        .input-group label { display: block; font-size: 0.8rem; color: #aaa; }
+        .input-group input { 
+            background: #333; border: 1px solid #555; color: white; padding: 8px; border-radius: 4px; width: 80px;
+        }
+
+        .flow-step { padding: 15px 30px; background: #333; border-radius: 8px; margin: 10px; cursor: pointer; opacity: 0.4; }
+        .flow-step:hover { opacity: 0.8; }
+        .flow-step.active { opacity: 1; background: var(--list-secondary); font-weight: bold; transform: scale(1.05); }
+
+        .split-view { display: flex; width: 100%; gap: 20px; margin-top: 20px; }
+        .split-panel { flex: 1; border: 1px solid #444; padding: 20px; border-radius: 8px; }
+        .counter-big { font-size: 3rem; font-weight: bold; margin: 10px 0; }
+
+        .diagram-part { 
+            display: inline-block; padding: 8px 15px; border: 1px solid var(--ll-primary); 
+            border-radius: 20px; margin: 5px; cursor: pointer; 
+        }
+        .diagram-part:hover { background: var(--ll-primary); color: white; }
+        .info-panel {
+            min-height: 60px; background: #222; padding: 10px; border-radius: 8px; 
+            margin-top: 15px; border-left: 4px solid var(--accent);
+        }
+
+        /* --- AI Chat Styles --- */
+        #ai-fab {
+            position: fixed; bottom: 80px; right: 20px; z-index: 200;
+            width: 60px; height: 60px; border-radius: 30px;
+            background: var(--ai-gradient);
+            border: none; color: white; font-size: 24px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+        #ai-fab:hover { transform: scale(1.1); }
+        
+        #ai-chat-window {
+            position: fixed; bottom: 150px; right: 20px; z-index: 200;
+            width: 350px; height: 500px;
+            background: #1e1e1e; border: 1px solid #444; border-radius: 12px;
+            display: flex; flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transform-origin: bottom right; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #ai-chat-window.closed { transform: scale(0); opacity: 0; pointer-events: none; }
+        
+        .chat-header {
+            padding: 15px; background: var(--ai-gradient);
+            border-radius: 12px 12px 0 0; color: white; font-weight: bold;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .chat-body { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .chat-footer { padding: 10px; border-top: 1px solid #333; display: flex; gap: 10px; }
+        
+        .chat-msg { padding: 10px; border-radius: 8px; max-width: 80%; font-size: 0.9rem; line-height: 1.4; }
+        .chat-msg.user { background: #333; align-self: flex-end; color: white; }
+        .chat-msg.ai { background: rgba(118, 75, 162, 0.2); border: 1px solid rgba(118, 75, 162, 0.4); align-self: flex-start; color: #e0e0e0; }
+        
+        .ai-response-box {
+            background: rgba(118, 75, 162, 0.1); border: 1px solid rgba(118, 75, 162, 0.3);
+            border-radius: 8px; padding: 15px; margin-top: 15px; text-align: left; font-size: 0.95rem;
+            color: #d1c4e9;
+        }
+
+        :focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+        @media (max-width: 768px) {
+            #sidebar { position: absolute; height: 100%; z-index: 50; }
+            .path-choice, .split-view { flex-direction: column; }
+            h1 { font-size: 1.8rem; }
+            #ai-chat-window { width: 90%; right: 5%; bottom: 100px; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Progress Bar -->
+    <div id="progress-container"><div id="progress-bar"></div></div>
+
+    <!-- Top Bar -->
+    <div id="top-bar">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <button class="btn" id="toggle-sidebar" aria-label="Toggle Menu">☰</button>
+            <span style="font-weight: bold;">Data Structures 101</span>
+        </div>
+        <div id="slide-counter">1 / 14</div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="main-container">
+        
+        <!-- Sidebar Navigation -->
+        <div id="sidebar">
+            <h3 style="color: var(--text-main); margin-top: 0;">Modules</h3>
+            <div id="toc"></div>
+        </div>
+
+        <!-- Slides Area -->
+        <div id="content-area">
+
+            <!-- Slide 1: Title -->
+            <div class="slide active" id="slide-1" data-title="Overview">
+                <h1>Lists vs Linked Lists</h1>
+                <h2>Understanding the Story of Memory</h2>
+                <button class="btn btn-primary" onclick="reveal('obj-1')">Start Learning</button>
+                <div id="obj-1" class="card hidden" style="margin-top: 30px;">
+                    <h3>🎯 What You Will Master</h3>
+                    <ul style="text-align: left;">
+                        <li>Visualizing memory layouts (Contiguous vs Scattered)</li>
+                        <li>Why indexes are basically just "Math"</li>
+                        <li>Why Linked Lists need Pointers</li>
+                        <li>The trade-off: Speed vs Flexibility</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Slide 2: The Big Question -->
+            <div class="slide" id="slide-2" data-title="The Big Question">
+                <h1>The Big Question</h1>
+                <p>When you save data, you have to make ONE big decision.</p>
+                <div class="path-choice">
+                    <div class="path-box list">
+                        <span style="font-size: 2rem;">📦📦📦</span>
+                        <h3 style="color: var(--list-primary)">Option A</h3>
+                        <p style="font-size: 0.8rem">Pack it tight (Contiguous)</p>
+                    </div>
+                    <div class="path-box ll">
+                        <span style="font-size: 2rem;">📦 ↝ 📦</span>
+                        <h3 style="color: var(--ll-primary)">Option B</h3>
+                        <p style="font-size: 0.8rem">Spread it out (Scattered)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 3: Python Lists -->
+            <div class="slide" id="slide-3" data-title="Python Lists">
+                <h1>Python Lists = <span style="color: var(--list-primary)">Contiguous</span></h1>
+                <p>Like reserved seats in a cinema. No gaps allowed.</p>
+                
+                <div class="memory-container">
+                    <div class="mem-block" onclick="alert('Address: 1000\nData: 10')">
+                        <div class="idx">0</div>10<div class="addr">1000</div>
+                    </div>
+                    <div class="mem-block" onclick="alert('Address: 1004\nData: 20')">
+                        <div class="idx">1</div>20<div class="addr">1004</div>
+                    </div>
+                    <div class="mem-block" onclick="alert('Address: 1008\nData: 30')">
+                        <div class="idx">2</div>30<div class="addr">1008</div>
+                    </div>
+                    <div class="mem-block" onclick="alert('Address: 1012\nData: 40')">
+                        <div class="idx">3</div>40<div class="addr">1012</div>
+                    </div>
+                </div>
+                
+                <!-- AI Feature: Analogy Generator -->
+                <div style="margin-top: 20px;">
+                    <button class="btn btn-sparkle" onclick="generateAnalogy('Python Lists contiguous memory layout')">✨ Generate New Analogy</button>
+                    <div id="analogy-res-list" class="ai-response-box hidden"></div>
+                </div>
+            </div>
+
+            <!-- Slide 4: Linked Lists -->
+            <div class="slide" id="slide-4" data-title="Linked Lists">
+                <h1>Linked Lists = <span style="color: var(--ll-primary)">Scattered</span></h1>
+                <p>Like a treasure hunt. You have a clue (Pointer) to find the next spot.</p>
+                
+                <div style="position: relative; height: 300px; width: 100%; max-width: 600px; margin: 20px 0;">
+                    <div id="ln-1" class="ll-node" style="position: absolute; top: 20px; left: 20px;">10
+                        <div style="position:absolute; bottom: -20px; font-size: 0.7rem; color: #888;">Addr: 5847</div>
+                        <div class="ll-arrow" style="transform: rotate(20deg); width: 100px; text-align:right;">Pointer ➔</div>
+                    </div>
+                    
+                    <div id="ln-2" class="ll-node" style="position: absolute; top: 80px; left: 200px; opacity: 0.5;">20
+                        <div style="position:absolute; bottom: -20px; font-size: 0.7rem; color: #888;">Addr: 1293</div>
+                        <div class="ll-arrow" style="transform: rotate(45deg); width: 80px; text-align:right; top: 30px;">➔</div>
+                    </div>
+
+                    <div id="ln-3" class="ll-node" style="position: absolute; top: 180px; left: 350px; opacity: 0.5;">30
+                        <div style="position:absolute; bottom: -20px; font-size: 0.7rem; color: #888;">Addr: 9876</div>
+                    </div>
+                </div>
+                <button class="btn btn-accent" onclick="animateLL()">Follow the Pointers</button>
+
+                <!-- AI Feature: Analogy Generator -->
+                <div style="margin-top: 20px;">
+                    <button class="btn btn-sparkle" onclick="generateAnalogy('Linked Lists scattered memory and pointers')">✨ Generate New Analogy</button>
+                    <div id="analogy-res-ll" class="ai-response-box hidden"></div>
+                </div>
+            </div>
+
+            <!-- Slide 5: The Math -->
+            <div class="slide" id="slide-5" data-title="The Math Magic">
+                <h1>Why Python Lists Have Indexes</h1>
+                <p>It's not magic. It's just arithmetic.</p>
+                
+                <div class="card">
+                    <h3 style="color: var(--list-primary)">Address = Start + (Index × Size)</h3>
+                    <div style="margin: 20px 0;">
+                        <div class="input-group">
+                            <label>Start Addr</label>
+                            <input type="number" id="calc-start" value="1000">
+                        </div>
+                        <span style="font-size: 1.5rem;">+ (</span>
+                        <div class="input-group">
+                            <label>Index</label>
+                            <input type="number" id="calc-idx" value="3">
+                        </div>
+                        <span style="font-size: 1.5rem;">×</span>
+                        <div class="input-group">
+                            <label>Size</label>
+                            <input type="number" id="calc-size" value="4">
+                        </div>
+                        <span style="font-size: 1.5rem;">)</span>
+                    </div>
+                    <button class="btn btn-primary" onclick="calcAddress()">Calculate</button>
+                    <div id="calc-res" style="margin-top: 15px; font-size: 1.2rem; font-weight: bold; min-height: 25px;"></div>
+                </div>
+            </div>
+
+            <!-- Slide 6: Impossible Math -->
+            <div class="slide" id="slide-6" data-title="Impossible Math">
+                <h1>The Impossible Math</h1>
+                <p>Linked Lists are random. Can you guess the pattern?</p>
+                <div style="display: flex; gap: 20px; margin: 30px 0;">
+                    <div class="ll-node" style="border-radius: 8px;">5847</div>
+                    <div class="ll-node" style="border-radius: 8px;">1293</div>
+                    <div class="ll-node" style="border-radius: 8px;">9876</div>
+                    <div class="ll-node" style="border-radius: 8px; border-style: dashed; background: transparent;">???</div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <input type="number" id="guess-input" placeholder="Next Addr?" style="padding: 10px; border-radius: 4px; border: 1px solid #555; background: #333; color: white;">
+                    <button class="btn btn-accent" onclick="checkGuess()">Check Guess</button>
+                </div>
+            </div>
+
+            <!-- Slide 7: Causal Chain -->
+            <div class="slide" id="slide-7" data-title="The Chain">
+                <h1>The Causal Chain</h1>
+                <p>Memory layout determines performance. Click to reveal logic.</p>
+                <div style="display: flex; flex-direction: column; align-items: center;">
+                    <div class="flow-step" onclick="this.classList.add('active'); this.innerText='Memory is Contiguous'">Memory Layout</div>
+                    <div style="font-size: 1.5rem;">↓</div>
+                    <div class="flow-step" onclick="this.classList.add('active'); this.innerText='Math Formula Works!'">Math Possible?</div>
+                    <div style="font-size: 1.5rem;">↓</div>
+                    <div class="flow-step" onclick="this.classList.add('active'); this.innerText='Direct Jump via Index'">Access Method</div>
+                    <div style="font-size: 1.5rem;">↓</div>
+                    <div class="flow-step" onclick="this.classList.add('active'); this.innerText='O(1) - Instant'">Performance</div>
+                </div>
+            </div>
+
+            <!-- Slide 8: Access Time -->
+            <div class="slide" id="slide-8" data-title="Access Time">
+                <h1>Access Time: O(1) vs O(n)</h1>
+                <p>Let's try to access Item #<span id="slider-val" style="color: var(--accent); font-weight: bold;">0</span></p>
+                
+                <input type="range" id="access-slider" min="0" max="100" value="0" style="width: 80%; margin: 20px 0;" oninput="updateAccessDemo(this.value)">
+
+                <div class="split-view">
+                    <div class="split-panel" style="border-color: var(--list-primary);">
+                        <h3 style="color: var(--list-primary);">Python List</h3>
+                        <div id="list-steps" class="counter-big">1</div>
+                        <p>Steps (Always Instant)</p>
+                    </div>
+                    <div class="split-panel" style="border-color: var(--ll-primary);">
+                        <h3 style="color: var(--ll-primary);">Linked List</h3>
+                        <div id="ll-steps" class="counter-big" style="color: var(--ll-secondary);">0</div>
+                        <p>Steps (Must walk 1 by 1)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 9: Components -->
+            <div class="slide" id="slide-9" data-title="Components">
+                <h1>Linked List Components</h1>
+                <p>Click parts to see their job.</p>
+                <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 20px 0;">
+                    <div class="diagram-part" onclick="showInfo('Head: The entry point. Lose this, lose everything.')">Head Pointer</div>
+                    <span>→</span>
+                    <div class="diagram-part" onclick="showInfo('Node: The box containing your Data AND the Map to next.')">Node</div>
+                    <span>→</span>
+                    <div class="diagram-part" onclick="showInfo('Pointer: The literal memory address of the next node.')">Pointer</div>
+                    <span>→</span>
+                    <div class="diagram-part" onclick="showInfo('Tail: Quick access to the end (for adding stuff).')">Tail</div>
+                    <span>→</span>
+                    <div class="diagram-part" onclick="showInfo('None: The cliff edge. Means stop here.')">None</div>
+                </div>
+                <div id="comp-info" class="info-panel">Click a component above...</div>
+            </div>
+
+            <!-- Slide 10: Math Challenge -->
+            <div class="slide" id="slide-10" data-title="Practice 1">
+                <h1>Practice: Memory Math</h1>
+                <div class="card">
+                    <p>Start Address: <b id="p1-start">2000</b> | Element Size: <b id="p1-size">8</b> bytes</p>
+                    <p>What is the address of <b>Index <span id="p1-idx">5</span></b>?</p>
+                    <input type="number" id="quiz-1-ans" placeholder="Answer..." style="padding: 10px; width: 100%; margin-bottom: 10px; background: #333; color: white; border: 1px solid #555;">
+                    <button class="btn btn-primary" onclick="checkQuiz1()">Check Answer</button>
+                    <div id="quiz-1-feedback" style="margin-top: 10px;"></div>
+                </div>
+                <!-- AI Feature: Generate New Problem -->
+                <button class="btn btn-sparkle" onclick="generateMathProblem()">✨ Generate New Problem</button>
+            </div>
+
+            <!-- Slide 11: Traversal Challenge -->
+            <div class="slide" id="slide-11" data-title="Practice 2">
+                <h1>Practice: Traversal</h1>
+                <p>How many nodes to reach Position 3 (the 4th item)?</p>
+                <div style="display: flex; gap: 10px; margin: 20px 0;">
+                    <div class="mem-block" id="trav-0" style="border-radius: 50%; border-color: var(--ll-primary);">0</div>
+                    <div class="mem-block" id="trav-1" style="border-radius: 50%; border-color: var(--ll-primary);">1</div>
+                    <div class="mem-block" id="trav-2" style="border-radius: 50%; border-color: var(--ll-primary);">2</div>
+                    <div class="mem-block" id="trav-3" style="border-radius: 50%; border-color: var(--ll-primary);">3</div>
+                </div>
+                <div style="font-size: 2rem; font-weight: bold; margin: 10px;">Steps: <span id="step-cnt">0</span></div>
+                <button class="btn btn-accent" onclick="takeStep()">Take a Step</button>
+            </div>
+
+            <!-- Slide 12: Trade Offs -->
+            <div class="slide" id="slide-12" data-title="Trade Offs">
+                <h1>The Trade-Off Summary</h1>
+                <table style="width: 100%; border-collapse: collapse; text-align: left; margin-top: 20px;">
+                    <tr style="border-bottom: 2px solid #444;">
+                        <th style="padding: 10px;">Feature</th>
+                        <th style="color: var(--list-primary)">Python Lists</th>
+                        <th style="color: var(--ll-primary)">Linked Lists</th>
+                    </tr>
+                    <tr onclick="this.style.background='#222'" style="cursor: pointer; border-bottom: 1px solid #333;">
+                        <td style="padding: 15px;">Memory</td>
+                        <td>Contiguous (Cinema)</td>
+                        <td>Scattered (Treasure Hunt)</td>
+                    </tr>
+                    <tr onclick="this.style.background='#222'" style="cursor: pointer; border-bottom: 1px solid #333;">
+                        <td style="padding: 15px;">Indexing</td>
+                        <td>✅ Yes (Math)</td>
+                        <td>❌ No (Pointers)</td>
+                    </tr>
+                    <tr onclick="this.style.background='#222'" style="cursor: pointer; border-bottom: 1px solid #333;">
+                        <td style="padding: 15px;">Access Speed</td>
+                        <td>🚀 O(1) Instant</td>
+                        <td>🚶 O(n) Linear</td>
+                    </tr>
+                </table>
+                <p style="margin-top: 30px; font-weight: bold; color: var(--accent);">Wait... if Linked Lists are slower, why use them?</p>
+                <p style="font-size: 0.9rem;">(Spoiler: They are faster at Inserting! Coming soon.)</p>
+            </div>
+
+            <!-- Slide 13: Self Check -->
+            <div class="slide" id="slide-13" data-title="Self Check">
+                <h1>Self Check</h1>
+                <div class="card" style="text-align: left;">
+                    <p><b>1. Why can't Linked Lists have indexes?</b></p>
+                    <button class="btn" style="width: 100%; text-align: left;" onclick="quizFeedback(this, false)">Python is just lazy.</button>
+                    <button class="btn" style="width: 100%; text-align: left;" onclick="quizFeedback(this, true)">Nodes are scattered, so math formulas don't work.</button>
+                    
+                    <p style="margin-top: 20px;"><b>2. Accessing Index 5000 in a List takes...</b></p>
+                    <button class="btn" style="width: 100%; text-align: left;" onclick="quizFeedback(this, true)">1 Step (Instant)</button>
+                    <button class="btn" style="width: 100%; text-align: left;" onclick="quizFeedback(this, false)">5000 Steps</button>
+                </div>
+            </div>
+
+            <!-- Slide 14: Takeaways -->
+            <div class="slide" id="slide-14" data-title="Takeaways">
+                <h1>Key Takeaways</h1>
+                <div style="text-align: left; background: #222; padding: 20px; border-radius: 10px; width: 100%; max-width: 600px;">
+                    <label style="display: block; margin: 15px; cursor: pointer;">
+                        <input type="checkbox" style="transform: scale(1.5); margin-right: 10px;"> Memory Layout dictates performance.
+                    </label>
+                    <label style="display: block; margin: 15px; cursor: pointer;">
+                        <input type="checkbox" style="transform: scale(1.5); margin-right: 10px;"> Lists use Math (Contiguous) → Fast Reading.
+                    </label>
+                    <label style="display: block; margin: 15px; cursor: pointer;">
+                        <input type="checkbox" style="transform: scale(1.5); margin-right: 10px;"> Linked Lists use Pointers (Scattered) → Slow Reading.
+                    </label>
+                </div>
+                <h2 style="color: var(--success); margin-top: 30px;">Ready for Big O? Let's Go! 🚀</h2>
+            </div>
+
+        </div>
+
+        <!-- AI Floating Action Button -->
+        <button id="ai-fab" onclick="toggleChat()">🤖</button>
+
+        <!-- AI Chat Window -->
+        <div id="ai-chat-window" class="closed">
+            <div class="chat-header">
+                <span>🤖 AI Data Structures Tutor</span>
+                <span style="cursor: pointer;" onclick="toggleChat()">✖</span>
+            </div>
+            <div id="chat-body" class="chat-body">
+                <div class="chat-msg ai">Hi! I'm your AI tutor. I know you're currently learning about <span id="chat-context" style="font-weight:bold; color: var(--accent)">Overview</span>. Ask me anything!</div>
+            </div>
+            <div class="chat-footer">
+                <input type="text" id="chat-input" placeholder="Ask a question..." style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #444; background: #333; color: white;" onkeydown="if(event.key==='Enter') sendChat()">
+                <button class="btn btn-sparkle" style="padding: 0 15px;" onclick="sendChat()">➤</button>
+            </div>
+        </div>
+
+        <!-- Navigation Buttons Bottom -->
+        <div style="position: fixed; bottom: 20px; left: 20px; display: flex; gap: 10px;">
+            <button class="btn" onclick="changeSlide(-1)">Prev</button>
+            <button class="btn btn-primary" onclick="changeSlide(1)">Next</button>
+        </div>
+
+    </div>
+
+    <script>
+        // State
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        const progressBar = document.getElementById('progress-bar');
+        const counter = document.getElementById('slide-counter');
+        const toc = document.getElementById('toc');
+        const apiKey = ""; // API Key handled by runtime
+        
+        // --- Initialization ---
+        
+        // Build TOC
+        slides.forEach((slide, idx) => {
+            const title = slide.getAttribute('data-title');
+            const item = document.createElement('div');
+            item.className = 'toc-item';
+            item.innerText = `${idx + 1}. ${title}`;
+            item.onclick = () => goToSlide(idx);
+            toc.appendChild(item);
+        });
+
+        // Load saved progress
+        const saved = localStorage.getItem('ll_slide_idx');
+        if (saved) {
+            goToSlide(parseInt(saved));
+        } else {
+            goToSlide(0);
+        }
+
+        // --- Navigation Logic ---
+
+        function updateUI() {
+            // Slides
+            slides.forEach((s, i) => {
+                if (i === currentSlide) s.classList.add('active');
+                else s.classList.remove('active');
+            });
+
+            // TOC
+            const items = document.querySelectorAll('.toc-item');
+            items.forEach((item, i) => {
+                if (i === currentSlide) item.classList.add('active');
+                else item.classList.remove('active');
+            });
+
+            // Progress
+            const pct = ((currentSlide + 1) / totalSlides) * 100;
+            progressBar.style.width = `${pct}%`;
+            counter.innerText = `${currentSlide + 1} / ${totalSlides}`;
+
+            // Context update for AI
+            const currentTitle = slides[currentSlide].getAttribute('data-title');
+            document.getElementById('chat-context').innerText = currentTitle;
+
+            // Save
+            localStorage.setItem('ll_slide_idx', currentSlide);
+        }
+
+        function changeSlide(dir) {
+            const next = currentSlide + dir;
+            if (next >= 0 && next < totalSlides) {
+                currentSlide = next;
+                updateUI();
+            }
+        }
+
+        function goToSlide(idx) {
+            if (idx >= 0 && idx < totalSlides) {
+                currentSlide = idx;
+                updateUI();
+            }
+        }
+
+        // Keyboard Nav
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName !== 'INPUT') {
+                if (e.key === 'ArrowRight') changeSlide(1);
+                if (e.key === 'ArrowLeft') changeSlide(-1);
+            }
+        });
+
+        // Toggle Sidebar
+        document.getElementById('toggle-sidebar').onclick = () => {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+        };
+
+        // --- Standard Interactive Functions ---
+
+        function reveal(id) {
+            document.getElementById(id).classList.remove('hidden');
+            document.getElementById(id).classList.add('revealed');
+        }
+
+        function animateLL() {
+            document.getElementById('ln-2').style.opacity = '1';
+            setTimeout(() => {
+                document.getElementById('ln-3').style.opacity = '1';
+            }, 800);
+        }
+
+        function calcAddress() {
+            const s = parseInt(document.getElementById('calc-start').value);
+            const i = parseInt(document.getElementById('calc-idx').value);
+            const z = parseInt(document.getElementById('calc-size').value);
+            const res = s + (i * z);
+            const el = document.getElementById('calc-res');
+            el.innerText = `Result: ${res}`;
+            el.style.color = 'var(--list-primary)';
+        }
+
+        function checkGuess() {
+            alert("Trick Question! There is no pattern. Addresses are random. That's why we need pointers!");
+        }
+
+        function updateAccessDemo(val) {
+            document.getElementById('slider-val').innerText = val;
+            document.getElementById('ll-steps').innerText = val;
+            document.getElementById('list-steps').innerText = 1;
+        }
+
+        function showInfo(text) {
+            const p = document.getElementById('comp-info');
+            p.innerText = text;
+            p.style.background = '#333';
+        }
+
+        function checkQuiz1() {
+            const val = document.getElementById('quiz-1-ans').value;
+            const fb = document.getElementById('quiz-1-feedback');
+            // Get dynamic values
+            const s = parseInt(document.getElementById('p1-start').innerText);
+            const sz = parseInt(document.getElementById('p1-size').innerText);
+            const idx = parseInt(document.getElementById('p1-idx').innerText);
+            const correct = s + (idx * sz);
+
+            if (parseInt(val) === correct) {
+                fb.innerHTML = `<span style="color:var(--success)">✅ Correct! ${s} + (${idx} × ${sz}) = ${correct}</span>`;
+            } else {
+                fb.innerHTML = `<span style="color:var(--error)">❌ Try again. Remember: Start + (Index × Size)</span>`;
+            }
+        }
+
+        let step = 0;
+        function takeStep() {
+            if (step > 3) { step = 0; document.querySelectorAll('#slide-11 .mem-block').forEach(b => b.style.background = '#252525'); }
+            const el = document.getElementById(`trav-${step}`);
+            if(el) {
+                el.style.background = 'var(--ll-secondary)';
+                document.getElementById('step-cnt').innerText = step;
+                step++;
+            }
+        }
+
+        function quizFeedback(btn, isCorrect) {
+            if(isCorrect) {
+                btn.style.background = 'var(--success)';
+                btn.innerText += " ✅ Correct!";
+            } else {
+                btn.style.background = 'var(--error)';
+                btn.innerText += " ❌ Wrong.";
+            }
+        }
+
+        // --- GEMINI API INTEGRATIONS ---
+
+        async function callGemini(prompt) {
+            if (!apiKey) {
+                console.error("API Key missing");
+                return "Error: API Key is missing. Ensure the environment provides it.";
+            }
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }]
+            };
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!response.ok) throw new Error(`API Error: ${response.status}`);
+                
+                const data = await response.json();
+                return data.candidates?.[0]?.content?.parts?.[0]?.text || "No response generated.";
+            } catch (e) {
+                console.error(e);
+                return "Sorry, I couldn't reach the AI server right now.";
+            }
+        }
+
+        // Feature 1: Chat
+        function toggleChat() {
+            document.getElementById('ai-chat-window').classList.toggle('closed');
+        }
+
+        async function sendChat() {
+            const input = document.getElementById('chat-input');
+            const body = document.getElementById('chat-body');
+            const msg = input.value.trim();
+            if(!msg) return;
+
+            // Add User Msg
+            body.innerHTML += `<div class="chat-msg user">${msg}</div>`;
+            input.value = "";
+            body.scrollTop = body.scrollHeight;
+
+            // Loading state
+            const loadId = Date.now();
+            body.innerHTML += `<div id="${loadId}" class="chat-msg ai">Thinking...</div>`;
+
+            const currentContext = slides[currentSlide].getAttribute('data-title');
+            const prompt = `You are a helpful Computer Science Tutor teaching Data Structures.
+            The student is looking at a slide titled: "${currentContext}".
+            The student asks: "${msg}".
+            Keep your answer short, encouraging, and relevant to Lists vs Linked Lists.`;
+
+            const response = await callGemini(prompt);
+            
+            document.getElementById(loadId).innerText = response;
+            body.scrollTop = body.scrollHeight;
+        }
+
+        // Feature 2: Analogy Generator
+        async function generateAnalogy(context) {
+            const targetId = context.includes('List') && !context.includes('Linked') ? 'analogy-res-list' : 'analogy-res-ll';
+            const box = document.getElementById(targetId);
+            
+            box.classList.remove('hidden');
+            box.innerText = "✨ Creating a new analogy for you...";
+
+            const prompt = `Create a creative, simple, and unique analogy to explain ${context} to a beginner. 
+            Do NOT use 'Cinema' or 'Treasure Hunt'. Make it relatable (e.g., train cars, books on shelf, etc.). 
+            Keep it under 2 sentences.`;
+
+            const text = await callGemini(prompt);
+            box.innerText = text;
+        }
+
+        // Feature 3: Math Problem Generator
+        async function generateMathProblem() {
+            const btn = document.querySelector('#slide-10 .btn-sparkle');
+            const originalText = btn.innerText;
+            btn.innerText = "✨ Generating...";
+            btn.disabled = true;
+
+            const prompt = `Generate random integer values for a memory math problem.
+            - Start Address: between 1000 and 5000 (step 100).
+            - Element Size: 2, 4, or 8.
+            - Target Index: between 3 and 15.
+            Return ONLY a JSON object: {"start": number, "size": number, "index": number}`;
+
+            try {
+                const text = await callGemini(prompt);
+                // Extract JSON if AI adds markdown
+                const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
+                const data = JSON.parse(jsonStr);
+
+                document.getElementById('p1-start').innerText = data.start;
+                document.getElementById('p1-size').innerText = data.size;
+                document.getElementById('p1-idx').innerText = data.index;
+                
+                document.getElementById('quiz-1-feedback').innerHTML = "<span style='color:var(--accent)'>New problem generated! Calculate it now.</span>";
+                document.getElementById('quiz-1-ans').value = "";
+            } catch (e) {
+                console.error("JSON Parse Error", e);
+                document.getElementById('quiz-1-feedback').innerText = "AI Error. Try again.";
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        }
+
+    </script>
+</body>
+</html>
